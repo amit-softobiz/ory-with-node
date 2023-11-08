@@ -1,0 +1,68 @@
+version: "3.7"
+
+services:
+  kratos-migrate:
+    image: oryd/kratos:v0.10.1
+
+    links:
+      - postgres-kratos:postgres-kratos
+
+    environment:
+      - DSN=postgres://postgres:root@192.168.0.173:5432/demo?sslmode=disable&max_conns=20&max_idle_conns=4
+
+    networks:
+      - intranet
+
+    volumes:
+      - type: bind
+
+        source: devops/ory/kratos/config/local
+
+        target: /etc/config/kratos
+
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+
+  kratos:
+    image: oryd/kratos:v0.10.1
+
+    links:
+      - postgres-kratos:postgres-kratos
+
+    environment:
+      - DSN=postgres://postgres:root@192.168.0.173:5432/demo?sslmode=disable&max_conns=20&max_idle_conns=4
+
+    ports:
+      - "4433:4433"
+
+      - "4434:4434"
+
+    volumes:
+      - type: bind
+
+        source: devops/ory/kratos/config/local
+
+        target: /etc/config/kratos
+
+    networks:
+      - intranet
+
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+
+  postgres-kratos:
+    image: postgres:9.6
+
+    environment:
+      - POSTGRES_USER=postgres
+
+      - POSTGRES_PASSWORD=root
+
+      - POSTGRES_DB=demo
+
+    networks:
+      - intranet
+
+networks:
+  intranet:
+
+volumes:
+  kratos-sqlite:
